@@ -6,12 +6,12 @@ from pathlib import Path
 from sys import argv
 
 
-def PArch(path:str, is_object:bool=False) -> str:
+def PArch(path:str) -> str:
 	'Создать из файла python-код'
 	
 	# Теги шаблона:
 	#  <|CONTENT|> - байт-контент
-	#  <|NAME|> - имя файла (с расширением)
+	#  <|NAME|>    - имя файла (с расширением)
 	blueprint = '''# MichiTheCat-RedStar (c) 2026\n# <|NAME|>\n
 from zlib import decompress\n
 with open(\'<|NAME|>\', \'wb\') as f: f.write(decompress(<|CONTENT|>))'''
@@ -20,29 +20,25 @@ with open(\'<|NAME|>\', \'wb\') as f: f.write(decompress(<|CONTENT|>))'''
 	
 	if not p.exists():
 		raise FileNotFoundError('Нет такого файла!')
-	elif not p.is_file(): #NOTE: Изначально было is_dir, но вспомнил, что
-		raise IsADirectoryError('Указан не файл!') # есть не только папки
+	elif not p.is_file():
+		raise IsADirectoryError('Указан не файл!')
 	
 	content = Path(p).read_bytes()
 	compressed = compress(content, level=9)
 	
 	name = p.name
 	
-	result = blueprint.replace('<|NAME|>', name).replace('<|CONTENT|>', str(compressed))
-	
-	if is_object:
-		with open(f'{name}.py', 'w', encoding='utf-8') as f: f.write(result)
-		return 'Успешно!'
-	else:
-		return result
+	return blueprint.replace('<|NAME|>', name).replace('<|CONTENT|>', str(compressed))
 
 
 #TEST
 if __name__ == '__main__':
 	if not argv[1:]:
-		PArch(input('Укажите путь: '), True)
+		with open(f'{input("Укажите имя: ")}.py', 'w', encoding='utf-8') as f:
+			f.write(PArch(input('Укажите путь: ').strip()))
 	else:
-		with open('a.py', 'w', encoding='utf-8') as f: f.write(PArch(argv[1]))
+		if Path(argv[1]).is_file():
+			print(PArch(argv[1]))
+		else:
+			raise FileNotFoundError('Ошибка нахождения файла!')
 
-
-#TODO: Не стоит переживать, будут правки
